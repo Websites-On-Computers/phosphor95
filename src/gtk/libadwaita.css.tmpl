@@ -1,0 +1,126 @@
+/* ── Phosphor-95 // libadwaita + GTK4 user layer ─────────── generated, edit src/
+ * Installed to ~/.config/gtk-4.0/gtk.css. Libadwaita ignores gtk-theme, but it loads
+ * this file on top of its own stylesheet, so this file recolours it and adds bevels.
+ */
+:root {
+  --window-bg-color: {{ core.face }};      --window-fg-color: {{ text.fg }};
+  --view-bg-color: {{ core.base }};        --view-fg-color: {{ text.fg }};
+  --headerbar-bg-color: {{ title.active_bg }};  --headerbar-fg-color: {{ title.active_fg }};
+  --headerbar-backdrop-color: {{ title.inactive_bg }};
+  --headerbar-border-color: {{ core.void }};    --headerbar-shade-color: {{ core.void }};
+  --headerbar-darker-shade-color: {{ core.void }};
+  --sidebar-bg-color: {{ core.face }};     --sidebar-fg-color: {{ text.fg }};
+  --sidebar-backdrop-color: {{ core.face }}; --sidebar-border-color: {{ core.void }};
+  --sidebar-shade-color: {{ core.void }};
+  --secondary-sidebar-bg-color: {{ core.base }}; --secondary-sidebar-fg-color: {{ text.fg }};
+  --secondary-sidebar-backdrop-color: {{ core.base }}; --secondary-sidebar-border-color: {{ core.void }};
+  --secondary-sidebar-shade-color: {{ core.void }};
+  --card-bg-color: {{ core.face_hover }};  --card-fg-color: {{ text.fg }};  --card-shade-color: {{ core.void }};
+  --dialog-bg-color: {{ core.face }};      --dialog-fg-color: {{ text.fg }};
+  --popover-bg-color: {{ core.face }};     --popover-fg-color: {{ text.fg }};  --popover-shade-color: {{ core.void }};
+  --thumbnail-bg-color: {{ core.face }};   --thumbnail-fg-color: {{ text.fg }};
+  --overview-bg-color: {{ core.base }};    --overview-fg-color: {{ text.fg }};
+  --shade-color: {{ core.void | alpha 0.5 }};
+  --scrollbar-outline-color: {{ core.void }};
+  --accent-bg-color: {{ select.bg }};      --accent-fg-color: {{ select.fg }};  --accent-color: {{ text.glow }};
+  --destructive-bg-color: {{ status.error }}; --destructive-fg-color: {{ core.void }}; --destructive-color: {{ status.error }};
+  --success-bg-color: {{ status.ok }};     --success-fg-color: {{ core.void }};  --success-color: {{ status.ok }};
+  --warning-bg-color: {{ status.warn }};   --warning-fg-color: {{ core.void }};  --warning-color: {{ status.warn }};
+  --error-bg-color: {{ status.error }};    --error-fg-color: {{ core.void }};    --error-color: {{ status.error }};
+  --border-color: {{ core.bevel_light }};
+  --window-radius: 0px;
+  --border-opacity: 100%;
+}
+
+/* Win95 bevels ------------------------------------------------------------- */
+button, menubutton > button, splitbutton > button, splitbutton > menubutton > button,
+dropdown > button, combobox > button, spinbutton > button, .toggle {
+  border-radius: 0;
+  background: {{ core.face }};
+  color: {{ text.fg }};
+  box-shadow: inset 1px 1px {{ core.bevel_hi }}, inset -1px -1px {{ core.void }},
+              inset 2px 2px {{ core.bevel_light }}, inset -2px -2px {{ core.shadow }};
+}
+button:hover { background: {{ core.face_hover }}; }
+button:active, button:checked, .toggle:checked {
+  background: {{ core.shadow }};
+  box-shadow: inset 1px 1px {{ core.void }}, inset -1px -1px {{ core.bevel_hi }},
+              inset 2px 2px {{ core.shadow }}, inset -2px -2px {{ core.bevel_light }};
+}
+button.flat:not(:hover):not(:checked):not(:active) { box-shadow: none; background: transparent; }
+button.suggested-action { background: {{ select.bg }}; color: {{ select.fg }}; }
+button.destructive-action { background: {{ status.error }}; color: {{ core.void }}; }
+button:focus-visible { outline: 1px dotted {{ text.fg_dim }}; outline-offset: -4px; }
+
+entry, spinbutton, searchbar entry, .search-entry, textview, passwordentry {
+  border-radius: 0;
+  background: {{ core.base }};
+  color: {{ text.fg }};
+  box-shadow: inset 1px 1px {{ core.shadow }}, inset -1px -1px {{ core.bevel_hi }},
+              inset 2px 2px {{ core.void }}, inset -2px -2px {{ core.bevel_light }};
+  caret-color: {{ text.glow }};
+}
+entry:focus-within { outline: 1px solid {{ text.fg_dim }}; outline-offset: -1px; }
+
+/* title bar = Win95 caption: inverted phosphor bar when focused */
+headerbar, .titlebar, toolbarview > .top-bar headerbar {
+  background: {{ title.active_bg }};
+  color: {{ title.active_fg }};
+  box-shadow: inset 0 -1px {{ core.void }};
+  min-height: 34px;
+}
+headerbar .title, headerbar label, .titlebar label { color: {{ title.active_fg }}; font-weight: bold; text-shadow: none; }
+headerbar:backdrop, .titlebar:backdrop, window:backdrop headerbar,
+toolbarview > .top-bar headerbar:backdrop, window:backdrop toolbarview > .top-bar headerbar {
+  background: {{ title.inactive_bg }}; color: {{ title.inactive_fg }};
+}
+window:backdrop headerbar label, headerbar:backdrop label, .titlebar:backdrop label { color: {{ title.inactive_fg }}; }
+/* libadwaita fades backdrop header contents; keep them solid like Win95 */
+toolbarview > .top-bar:backdrop, headerbar:backdrop > windowhandle, .top-bar:backdrop headerbar { opacity: 1; filter: none; }
+headerbar button { color: {{ text.fg }}; min-height: 22px; min-width: 22px; padding: 2px 6px; }
+headerbar button label, headerbar button image { color: {{ text.fg }}; }
+/* popovers (app menus, ☰) are children of headerbar: give them normal menu text back */
+headerbar popover, headerbar popover label, headerbar popover modelbutton,
+headerbar popover button label, headerbar popover image, .titlebar popover label {
+  color: {{ text.fg }}; font-weight: normal; text-shadow: 0 0 3px {{ text.fg | alpha 0.28 }};
+}
+headerbar popover modelbutton:hover, headerbar popover modelbutton:hover label,
+headerbar popover modelbutton:selected label, headerbar popover row:selected label {
+  background-color: {{ select.bg }}; color: {{ select.fg }}; text-shadow: none;
+}
+headerbar popover .dim-label, headerbar popover .accelerator { color: {{ text.fg_dim }}; }
+windowcontrols button { margin: 0 1px; padding: 0; min-height: 20px; min-width: 22px; }
+windowcontrols button image { color: {{ text.fg }}; background: none; box-shadow: none; }
+
+/* square everything ------------------------------------------------------- */
+window, window.csd, dialog, .dialog-sheet, popover > contents, popover > arrow, .card, list.boxed-list,
+row, .navigation-sidebar row, check, radio, switch, scale trough, progressbar trough, tooltip,
+banner > revealer > widget, toast, .osd, popover modelbutton, popover.menu modelbutton, popover row {
+  border-radius: 0;
+}
+window.csd { box-shadow: 0 0 0 1px {{ core.void }}, inset 1px 1px {{ core.bevel_hi }}, inset -1px -1px {{ core.shadow }}; }
+popover > contents, .card, list.boxed-list {
+  box-shadow: inset 1px 1px {{ core.bevel_hi }}, inset -1px -1px {{ core.void }}, 0 0 0 1px {{ core.void }};
+}
+check, radio {
+  background: {{ core.base }}; color: {{ text.fg }};
+  box-shadow: inset 1px 1px {{ core.shadow }}, inset -1px -1px {{ core.bevel_hi }};
+}
+radio { border-radius: 9999px; }
+switch { background: {{ core.base }}; box-shadow: inset 1px 1px {{ core.shadow }}, inset -1px -1px {{ core.bevel_hi }}; }
+switch:checked { background: {{ text.fg_dim }}; }
+switch > slider { border-radius: 0; background: {{ core.face }};
+  box-shadow: inset 1px 1px {{ core.bevel_hi }}, inset -1px -1px {{ core.void }}; }
+
+/* selection, text, glow ---------------------------------------------------- */
+selection, *:selected, row:selected, .view:selected {
+  background-color: {{ select.bg }}; color: {{ select.fg }};
+}
+row:selected label { color: {{ select.fg }}; text-shadow: none; }
+label { text-shadow: 0 0 3px {{ text.fg | alpha 0.28 }}; }
+.dim-label, .dimmed { color: {{ text.fg_dim }}; opacity: 1; }
+progressbar > trough > progress { background: {{ text.fg }}; border-radius: 0; }
+scale > trough > highlight { background: {{ text.fg }}; border-radius: 0; }
+scrollbar slider { border-radius: 0; background: {{ core.bevel_light }}; min-width: 8px; min-height: 8px; }
+scrollbar slider:hover { background: {{ text.fg_dim }}; }
+tooltip { background: {{ core.base }}; color: {{ text.fg }}; border: 1px solid {{ text.fg_dim }}; box-shadow: none; }

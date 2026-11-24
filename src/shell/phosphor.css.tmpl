@@ -1,0 +1,465 @@
+/* ══ Phosphor-95 // GNOME Shell overrides ═══════════════════ generated, edit src/
+ * Layered on top of the stock (Yaru dark) shell stylesheet: the user theme @imports
+ * it first, and the GDM build appends this file to it. Only override what we restyle.
+ *
+ * Win95 bevel in St, which allows one box-shadow and per-side border colours:
+ *   raised:  border-color: HI VOID VOID HI;  box-shadow: inset -1px -1px 0 SHADOW
+ *   sunken:  border-color: SHADOW HI HI SHADOW;  box-shadow: inset 1px 1px 0 VOID
+ */
+
+stage {
+  font-family: "{{ fonts.ui }}", sans-serif;
+  font-size: {{ fonts.ui_size }}pt;
+  color: {{ text.fg }};
+}
+
+/* ── top bar: slim status HUD ─────────────────────────────────────────── */
+#panel, #panel:overview {
+  background-color: {{ core.face }} !important;   /* Yaru forces #131313 !important */
+  height: 28px;
+  font-weight: normal;
+  border-bottom: 1px solid {{ core.void }};
+  box-shadow: inset 0 -1px 0 {{ core.shadow }};
+  padding: 0 2px;
+}
+#panel.solid,
+#panel.unlock-screen,
+#panel.login-screen,
+#panel.lock-screen {
+  background-color: {{ core.face }};
+}
+#panel .panel-button {
+  color: {{ text.fg }};
+  border-radius: 0;
+  margin: 2px 1px;
+  padding: 0 8px;
+  -natural-hpadding: 8px;
+  -minimum-hpadding: 6px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  box-shadow: none;
+  text-shadow: 0 0 4px {{ text.fg | alpha 0.35 }};
+  transition-duration: 0ms;
+}
+#panel .panel-button:hover, #panel .panel-button:focus:hover {
+  box-shadow: none;
+  color: {{ text.glow }};
+  background-color: {{ core.face_hover }};
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+}
+#panel .panel-button:active, #panel .panel-button:overview,
+#panel .panel-button:focus, #panel .panel-button:checked,
+#panel .panel-button:active:hover, #panel .panel-button:checked:hover {
+  color: {{ select.fg }};
+  background-color: {{ select.bg }};
+  border-color: {{ core.void }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.void }};
+  box-shadow: none;
+  text-shadow: none;
+}
+#panel .panel-button .system-status-icon,
+#panel .panel-button .app-menu-icon > StIcon,
+#panel .panel-button .popup-menu-arrow {
+  color: {{ text.fg }};
+  icon-shadow: 0 0 4px {{ text.fg | alpha 0.35 }};
+}
+#panel .panel-button:active .system-status-icon,
+#panel .panel-button:checked .system-status-icon { color: {{ select.fg }}; icon-shadow: none; }
+
+/* clock: recessed LCD-style readout */
+#panel .clock-display {
+  font-family: "{{ fonts.mono }}", monospace;
+  color: {{ text.glow }};
+}
+#panel .panel-button.clock-display .clock,
+#panel .clock-display .clock {
+  background-color: {{ core.base }};
+  border: 1px solid;
+  border-color: {{ core.shadow }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.shadow }};
+  border-radius: 0;
+  padding: 0 10px;
+  margin: 1px 0;
+  color: {{ text.glow }};
+  text-shadow: 0 0 5px {{ text.fg | alpha 0.6 }};
+}
+#panel .panel-button:checked .clock { color: {{ text.glow }}; }
+
+/* workspace pills -> square LEDs (Yaru uses !important here, so must we) */
+#panel .panel-button#panelActivities .workspace-dot,
+#panel:overview .panel-button#panelActivities .workspace-dot {
+  background-color: {{ text.fg }} !important;
+  border-radius: 0 !important;
+  min-height: 0.5em;
+}
+#panel .panel-button#panelActivities:active .workspace-dot,
+#panel .panel-button#panelActivities:checked .workspace-dot,
+#panel .panel-button#panelActivities:overview .workspace-dot { background-color: {{ select.fg }} !important; }
+.p95-hud-id {
+  font-family: "{{ fonts.mono }}", monospace;
+  color: {{ text.fg_dim }};
+  padding: 0 10px 0 6px;
+}
+
+/* system-monitor extension: live CPU / MEM / NET readout */
+.system-monitor-stat-section-label { font-family: "{{ fonts.mono }}", monospace; font-size: {{ fonts.ui_size }}pt; color: {{ text.fg }}; }
+.system-monitor-stat-section-icon { color: {{ text.fg_dim }}; }
+.panel-button .high-usage { color: {{ status.warn }} !important; }
+
+/* ── bottom taskbar: lives in the phosphor95-shell extension's stylesheet.css ──
+   (St ranks extension stylesheets above the shell theme, even over !important,
+    so window-list's own colours can only be beaten from another extension) */
+
+/* START button (apps-menu, relabelled + moved into the taskbar by phosphor95-shell) */
+#panelApplications.p95-start, .bottom-panel #panelApplications {
+  color: {{ text.glow }};
+  font-weight: bold;
+  background-color: {{ core.face }};
+  border-radius: 0;
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+  padding: 0 10px 0 6px;
+  margin: 2px 6px 2px 0;
+  text-shadow: 0 0 5px {{ text.fg | alpha 0.6 }};
+}
+#panelApplications.p95-start:hover { background-color: {{ core.face_hover }}; }
+#panelApplications.p95-start:checked, #panelApplications.p95-start:active {
+  color: {{ select.fg }};
+  background-color: {{ select.bg }};
+  border-color: {{ core.void }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.void }};
+  box-shadow: inset 1px 1px 0 {{ core.shadow }};
+  text-shadow: none;
+}
+.p95-start-logo { icon-size: 16px; color: {{ text.glow }}; padding-right: 6px; }
+#panelApplications.p95-start:checked .p95-start-logo { color: {{ select.fg }}; }
+.apps-menu { width: 28em; }
+
+/* ── menus & popovers: Win95 raised panel ─────────────────────────────── */
+.popup-menu-boxpointer, .candidate-popup-boxpointer {
+  -arrow-border-radius: 0;
+  -arrow-background-color: transparent;
+  -arrow-border-width: 0;
+  -arrow-base: 0;
+  -arrow-rise: 0;
+  -boxpointer-gap: 2px;
+}
+.popup-menu-content, .candidate-popup-content, .quick-settings, .datemenu-popover {
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border-radius: 0;
+  border: 2px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+  padding: 4px;
+}
+.popup-menu-item {
+  border-radius: 0;
+  color: {{ text.fg }};
+  padding: 4px 12px;
+  spacing: 8px;
+  text-shadow: 0 0 3px {{ text.fg | alpha 0.3 }};
+}
+.popup-menu-item:hover, .popup-menu-item:focus, .popup-menu-item.selected,
+.popup-menu-item:active, .popup-menu-item:checked {
+  background-color: {{ select.bg }};
+  color: {{ select.fg }};
+  text-shadow: none;
+}
+.popup-menu-item:hover .popup-menu-icon, .popup-menu-item:focus .popup-menu-icon,
+.popup-menu-item.selected .popup-menu-icon { color: {{ select.fg }}; }
+.popup-menu-item:insensitive { color: {{ text.fg_faint }}; }
+.popup-separator-menu-item .popup-separator-menu-item-separator {
+  background-color: {{ core.shadow }};
+  height: 1px;
+  border-bottom: 1px solid {{ core.bevel_hi }};
+}
+.popup-sub-menu { background-color: {{ core.base }}; border-radius: 0; }
+.popup-menu-ornament { color: {{ text.fg }}; }
+
+/* ── quick settings ───────────────────────────────────────────────────── */
+.quick-settings { padding: 10px; }
+.quick-toggle, .quick-menu-toggle .quick-toggle, .quick-settings-system-item .icon-button,
+.quick-settings .icon-button, .quick-toggle-menu .header .icon {
+  border-radius: 0 !important;
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+}
+.quick-toggle:hover, .quick-settings .icon-button:hover { background-color: {{ core.face_hover }}; color: {{ text.glow }}; }
+.quick-toggle:checked, .quick-menu-toggle .quick-toggle:checked,
+.quick-menu-toggle .quick-toggle-arrow:checked, .quick-toggle-menu .header .icon.active {
+  background-color: {{ select.bg }};
+  color: {{ select.fg }};
+  border-color: {{ core.void }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.void }};
+  box-shadow: inset 1px 1px 0 {{ core.shadow }};
+}
+.quick-menu-toggle .quick-toggle-arrow { border-radius: 0 !important; background-color: {{ core.face }}; color: {{ text.fg }}; }
+.quick-toggle-menu {
+  background-color: {{ core.base }};
+  border-radius: 0;
+  border: 1px solid;
+  border-color: {{ core.shadow }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.shadow }};
+}
+.quick-slider .slider, .slider {
+  -slider-height: 6px;
+  -slider-background-color: {{ core.base }};
+  -slider-border-color: {{ core.shadow }};
+  -slider-active-background-color: {{ text.fg }};
+  -slider-active-border-color: {{ text.fg }};
+  -slider-border-width: 1px;
+  -slider-handle-radius: 7px;
+  -slider-handle-border-width: 1px;
+  -slider-handle-border-color: {{ core.void }};
+  -barlevel-height: 6px;
+  -barlevel-background-color: {{ core.base }};
+  -barlevel-active-background-color: {{ text.fg }};
+  -barlevel-overdrive-color: {{ status.warn }};
+  -barlevel-border-radius: 0;
+  color: {{ core.bevel_hi }};
+}
+.toggle-switch { color: {{ text.fg }}; }
+
+/* ── calendar / notifications: Win95 dialog boxes ─────────────────────── */
+.calendar, .events-button, .world-clocks-button, .weather-button, .message,
+.message-list-controls, .datemenu-today-button {
+  border-radius: 0 !important;
+}
+.calendar, .events-button, .world-clocks-button, .weather-button, .message {
+  background-color: {{ core.face }};
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+  color: {{ text.fg }};
+}
+.calendar .calendar-day, .calendar-day-base, .calendar-day {
+  border-radius: 0;
+  color: {{ text.fg }};
+}
+.calendar-today, .calendar .calendar-today {
+  background-color: {{ select.bg }};
+  color: {{ select.fg }};
+  font-weight: bold;
+}
+.calendar-day:hover, .calendar-day-base:hover { background-color: {{ core.face_hover }}; color: {{ text.glow }}; }
+.calendar-weekend, .calendar-nonwork-day { color: {{ text.fg_dim }}; }
+.calendar-other-month-day, .calendar-other-month { color: {{ text.fg_faint }}; }
+.datemenu-today-button .date-label { font-family: "{{ fonts.display }}", monospace; font-size: 22pt; color: {{ text.glow }}; text-shadow: 0 0 6px {{ text.fg | alpha 0.6 }}; }
+.datemenu-today-button .day-label { color: {{ text.fg_dim }}; }
+
+.notification-banner, .notification-banner .message {
+  background-color: {{ core.face }};
+  border-radius: 0;
+  border: 2px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: 0 2px 0 {{ core.void | alpha 0.6 }};
+}
+.message .message-header {
+  background-color: {{ title.active_bg }};
+  color: {{ title.active_fg }};
+  padding: 2px 6px;
+}
+.message .message-header .message-source-title,
+.message .message-header .event-time,
+.message .message-header .message-source-icon { color: {{ title.active_fg }}; font-weight: bold; text-shadow: none; }
+.message .message-title { color: {{ text.glow }}; font-weight: bold; }
+.message .message-body { color: {{ text.fg }}; }
+.message .message-close-button, .message .message-expand-button, .message-header .icon-button {
+  border-radius: 0;
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+}
+.notification-button, .message-media-control {
+  border-radius: 0;
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+}
+.notification-button:hover, .message-media-control:hover { background-color: {{ select.bg }}; color: {{ select.fg }}; }
+.message-list-placeholder { color: {{ text.fg_faint }}; }
+
+/* ── modal dialogs (run, power off, polkit, auth) ─────────────────────── */
+.modal-dialog {
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border-radius: 0;
+  border: 2px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+}
+.modal-dialog .modal-dialog-content-box { margin: 18px 24px; }
+.modal-dialog .message-dialog-title, .modal-dialog .headline, .run-dialog .modal-dialog-title {
+  background-color: {{ title.active_bg }};
+  color: {{ title.active_fg }};
+  font-weight: bold;
+  padding: 3px 8px;
+  text-shadow: none;
+}
+.modal-dialog .message-dialog-description { color: {{ text.fg }}; }
+.modal-dialog-button-box { background-color: {{ core.face }}; border-top: 1px solid {{ core.shadow }}; padding: 8px; spacing: 8px; }
+.modal-dialog-button-box .modal-dialog-button, .button, .login-dialog-button, .icon-button, .notification-button {
+  border-radius: 0;
+}
+.modal-dialog-button-box .modal-dialog-button, .button {
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+  padding: 4px 18px;
+  min-width: 80px;
+}
+.modal-dialog-button-box .modal-dialog-button:hover, .button:hover { background-color: {{ core.face_hover }}; color: {{ text.glow }}; }
+.modal-dialog-button-box .modal-dialog-button:active, .button:active, .button:checked,
+.modal-dialog-button-box .modal-dialog-button:focus, .button:focus {
+  border-color: {{ core.void }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.void }};
+  box-shadow: inset 1px 1px 0 {{ core.shadow }};
+}
+.modal-dialog-button-box .modal-dialog-button.default, .button.default {
+  background-color: {{ select.bg }};
+  color: {{ select.fg }};
+  font-weight: bold;
+}
+.modal-dialog-button-box .modal-dialog-button.destructive-action, .button.destructive-action {
+  background-color: {{ status.error }}; color: {{ core.void }};
+}
+
+/* text fields */
+StEntry, .search-entry, .run-dialog-entry, .prompt-dialog-password-entry,
+.login-dialog-prompt-entry, .unlock-dialog .login-dialog-prompt-entry {
+  background-color: {{ core.base }} !important;
+  color: {{ text.fg }};
+  caret-color: {{ text.glow }};
+  selection-background-color: {{ select.bg }};
+  selected-color: {{ select.fg }};
+  border-radius: 0 !important;
+  border: 2px solid;
+  border-color: {{ core.shadow }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.shadow }} !important;
+  box-shadow: inset 1px 1px 0 {{ core.void }};
+}
+StEntry:focus, .search-entry:focus { border-color: {{ core.shadow }} {{ text.fg }} {{ text.fg }} {{ core.shadow }} !important; }
+StEntry StLabel.hint-text { color: {{ text.fg_faint }}; }
+
+/* ── OSD, switchers, tiling preview ───────────────────────────────────── */
+.osd-window, .resize-popup, .osd-monitor-label, .pad-osd-window {
+  background-color: {{ core.base }};
+  color: {{ text.fg }};
+  border-radius: 0;
+  border: 1px solid {{ text.fg_dim }};
+  box-shadow: none;
+}
+.osd-window .level { -barlevel-height: 8px; -barlevel-background-color: {{ core.face }}; -barlevel-active-background-color: {{ text.fg }}; -barlevel-border-radius: 0; }
+.osd-window StIcon { color: {{ text.glow }}; }
+
+.switcher-popup .switcher-list, .switcher-list, .workspace-switcher {
+  background-color: {{ core.face }};
+  border-radius: 0;
+  border: 2px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+  color: {{ text.fg }};
+}
+.switcher-list .item-box { border-radius: 0; border: 1px solid transparent; }
+.switcher-list .item-box:selected, .switcher-list .item-box:outlined {
+  background-color: {{ core.base }};
+  border: 1px dotted {{ text.fg }};
+}
+.switcher-list .item-box .switcher-list-item-label, .switcher-list-item-label { color: {{ text.glow }}; }
+.switcher-arrow { color: {{ text.fg_dim }}; }
+.ws-switcher-indicator, .ws-switcher-box { border-radius: 0; background-color: {{ core.base }}; border: 1px solid {{ text.fg_faint }}; }
+.ws-switcher-indicator:active { background-color: {{ select.bg }}; }
+
+.tile-preview {
+  background-color: {{ text.fg | alpha 0.12 }};
+  border: 1px solid {{ text.fg }};
+  border-radius: 0;
+}
+.select-area-rubberband { background-color: {{ text.fg | alpha 0.15 }}; border: 1px dotted {{ text.fg }}; }
+
+/* ── overview ─────────────────────────────────────────────────────────── */
+#overviewGroup, .workspace-background { border-radius: 0; }
+.workspace-background { box-shadow: 0 0 0 1px {{ text.fg_faint }}; }
+.dash-background {
+  background-color: {{ core.face }};
+  border-radius: 0;
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+}
+.dash-label, .window-caption {
+  background-color: {{ core.base }};
+  color: {{ text.fg }};
+  border-radius: 0;
+  border: 1px solid {{ text.fg_dim }};
+}
+.overview-tile, .app-well-app .overview-icon, .grid-search-result .overview-icon,
+.show-apps .overview-icon, .app-folder, .search-provider-icon, .list-search-result {
+  border-radius: 0 !important;
+}
+.overview-tile:hover, .overview-tile:focus, .overview-tile:selected,
+.app-well-app:hover .overview-icon, .app-well-app:focus .overview-icon,
+.grid-search-result:hover .overview-icon, .list-search-result:hover, .list-search-result:focus {
+  background-color: {{ text.fg | alpha 0.14 }};
+  border: 1px dotted {{ text.fg }};
+}
+.overview-tile .overview-label, .app-well-app .overview-label { color: {{ text.fg }}; text-shadow: 0 0 4px {{ text.fg | alpha 0.4 }}; }
+.app-grid-running-dot { background-color: {{ text.fg }}; border-radius: 0; width: 8px; height: 2px; }
+.page-indicator .page-indicator-icon { border-radius: 0; background-color: {{ text.fg }}; }
+.search-section-content { border-radius: 0; background-color: {{ core.face | alpha 0.9 }}; }
+.search-statustext, .list-search-result-description { color: {{ text.fg_dim }}; }
+.window-close { border-radius: 0; background-color: {{ status.error }}; color: {{ core.void }}; }
+.app-folder-dialog { border-radius: 0; background-color: {{ core.face }}; border: 2px solid {{ core.bevel_hi }}; }
+
+/* ── lock screen ──────────────────────────────────────────────────────── */
+.unlock-dialog-clock { color: {{ text.glow }}; }
+.unlock-dialog-clock-time {
+  font-family: "{{ fonts.display }}", monospace;
+  font-size: 96pt;
+  font-weight: normal;
+  color: {{ text.glow }};
+  text-shadow: 0 0 18px {{ text.fg | alpha 0.75 }};
+}
+.unlock-dialog-clock-date {
+  font-family: "{{ fonts.mono }}", monospace;
+  font-size: 16pt;
+  color: {{ text.fg }};
+  text-shadow: 0 0 6px {{ text.fg | alpha 0.5 }};
+}
+.unlock-dialog-clock-hint { font-family: "{{ fonts.mono }}", monospace; color: {{ text.fg_dim }}; }
+.unlock-dialog-notifications-container .notification,
+.unlock-dialog-notification-source { border-radius: 0; background-color: {{ core.face | alpha 0.9 }}; }
+.login-dialog-user-list-view .login-dialog-user-list .login-dialog-user-list-item,
+.login-dialog-button, .login-dialog .modal-dialog-button {
+  border-radius: 0 !important;
+}
+.login-dialog-user-list-item:focus, .login-dialog-user-list-item:hover,
+.login-dialog-user-list-item:selected {
+  background-color: {{ text.fg | alpha 0.15 }};
+  border: 1px dotted {{ text.fg }};
+}
+.login-dialog-username, .user-widget-label {
+  font-family: "{{ fonts.mono }}", monospace;
+  color: {{ text.glow }};
+  text-shadow: 0 0 6px {{ text.fg | alpha 0.5 }};
+}
+.login-dialog-button, .unlock-dialog .login-dialog-button {
+  background-color: {{ core.face }};
+  color: {{ text.fg }};
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+}
+.login-dialog-button:hover, .login-dialog-button:focus { background-color: {{ select.bg }}; color: {{ select.fg }}; }
+.user-icon { border-radius: 0 !important; border: 2px solid {{ text.fg_dim }}; background-color: {{ core.base }}; color: {{ text.fg }}; }
+.login-dialog-message-warning, .caps-lock-warning-label { color: {{ status.warn }}; }
+.login-dialog-message-error { color: {{ status.error }}; }
+.login-dialog-banner, .login-dialog-message-hint { color: {{ text.fg_dim }}; }
+
+/* screenshot UI + misc */
+.screenshot-ui-panel { border-radius: 0; background-color: {{ core.face }}; border: 2px solid {{ core.bevel_hi }}; }
+.screenshot-ui-type-button, .screenshot-ui-shot-cast-button, .screenshot-ui-close-button { border-radius: 0; }
+.screenshot-ui-type-button:checked, .screenshot-ui-shot-cast-button:checked { background-color: {{ select.bg }}; color: {{ select.fg }}; }
+.shell-link { color: {{ text.glow }}; }
+.shell-link:hover { color: {{ select.fg }}; background-color: {{ select.bg }}; }
+.keyboard-key { border-radius: 0; background-color: {{ core.face }}; color: {{ text.fg }}; border: 1px solid {{ core.bevel_hi }}; }

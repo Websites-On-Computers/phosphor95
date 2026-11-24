@@ -1,0 +1,195 @@
+// Phosphor-95 Shell companion. Generated from src/shell/extension, edit there.
+// Defensive: every step is optional. If a target can't be found, the stock layout stays put.
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+const START_LABEL = '{{ identity.start }}';
+const HUD_LABEL = '▓ {{ identity.name }}';
+
+export default class Phosphor95Shell extends Extension {
+    // START is apps-menu's button, re-parented into window-list's taskbar. Both of those
+    // extensions can tear their actors down at any time (lock screen, disable, monitor change),
+    // and GNOME enables this extension *before* them. Rules that keep the Shell alive:
+    //   * before window-list destroys the taskbar box, hand START back to the top bar
+    //     (a 'destroy' handler runs before Clutter destroys the box's children);
+    //   * when apps-menu destroys its button, forget it and never touch it again.
+    enable() {
+        this._start = null;
+        this._hud = null;
+        this._timeoutId = 0;
+        this._addHud();
+        this._schedule();
+        // window-list rebuilds its panels on monitor changes / re-enable; apps-menu re-adds its button
+        this._uiAddedId = Main.layoutManager.uiGroup.connect('child-added', (_g, actor) => {
+            if (actor.has_style_class_name?.('bottom-panel'))
+                this._schedule();
+        });
+        this._leftAddedId = Main.panel._leftBox.connect('child-added', () => this._schedule());
+        this._monitorsId = Main.layoutManager.connect('monitors-changed', () => this._schedule());
+        // Shell shutdown destroys the whole UI tree: nothing to hand START back to then
+        this._tearingDown = false;
+        this._uiDestroyId = Main.layoutManager.uiGroup.connect('destroy', () => { this._tearingDown = true; });
+    }
+
+    disable() {
+        if (this._timeoutId) GLib.source_remove(this._timeoutId);
+        this._timeoutId = 0;
+        if (this._uiAddedId) Main.layoutManager.uiGroup.disconnect(this._uiAddedId);
+        if (this._leftAddedId) Main.panel._leftBox.disconnect(this._leftAddedId);
+        if (this._monitorsId) Main.layoutManager.disconnect(this._monitorsId);
+        if (this._uiDestroyId) Main.layoutManager.uiGroup.disconnect(this._uiDestroyId);
+        this._uiAddedId = this._leftAddedId = this._monitorsId = this._uiDestroyId = 0;
+        this._restoreStart();
+        this._hud?.destroy();
+        this._hud = null;
+    }
+
+    _schedule() {
+        if (this._timeoutId) return;
+        let tries = 0;
+        this._timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
+            const done = this._applyStart();
+            if (done || ++tries > 25) {
+                this._timeoutId = 0;
+                return GLib.SOURCE_REMOVE;
+            }
+            return GLib.SOURCE_CONTINUE;
+        });
+    }
+
+    _findTaskbarBox() {
+        // window-list adds one 'bottom-panel' actor per monitor; prefer the primary one
+        const panels = Main.layoutManager.uiGroup.get_children()
+            .filter(a => a.has_style_class_name?.('bottom-panel'));
+        if (!panels.length) return null;
+        const primary = Main.layoutManager.primaryMonitor;
+        const panel = panels.find(p => p._monitor === primary) ?? panels[0];
+        return panel.get_first_child();  // St.BoxLayout: [windowList, indicators]
+    }
+
+    _applyStart() {
+        const button = Main.panel.statusArea['apps-menu'];
+        if (!button) return false;                // apps-menu not up (yet): retry / wait for child-added
+        try {
+            if (this._start?.button !== button) {
+                this._restoreStart();
+                this._adopt(button);
+            }
+            const box = this._findTaskbarBox();
+            if (!box) return false;              // window-list not up yet: START stays in the top bar
+            if (this._start.box !== box) {
+                this._undock();
+                this._dock(box);
+            }
+            return true;
+        } catch (e) {
+            console.error(`[phosphor95] START docking failed: ${e}`);
+            return true;                          // don't spin on errors
+        }
+    }
+
+    // relabel + logo. PanelMenu.Button lays out only its first child, so logo + label share a row.
+    _adopt(button) {
+        const label = button._label ?? null;
+        const s = this._start = {
+            button, label, box: null, boxDestroyId: 0, row: null, logo: null,
+            origText: label?.text ?? null,
+            origIndex: Math.max(0, Main.panel._leftBox.get_children().indexOf(button.container)),
+            buttonDestroyId: 0,
+        };
+        // apps-menu destroyed its button (disable / lock): everything we added died with it
+        s.buttonDestroyId = button.connect('destroy', () => {
+            if (this._start !== s) return;
+            if (s.box && s.boxDestroyId) s.box.disconnect(s.boxDestroyId);
+            this._start = null;
+        });
+        button.add_style_class_name('p95-start');
+        s.logo = new St.Icon({
+            icon_name: 'utilities-terminal-symbolic',
+            style_class: 'p95-start-logo',
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        if (label && label.get_parent() === button) {
+            label.text = START_LABEL;
+            s.row = new St.BoxLayout({
+                style_class: 'p95-start-row', x_expand: false, y_align: Clutter.ActorAlign.CENTER,
+            });
+            button.remove_child(label);
+            s.row.add_child(s.logo);
+            s.row.add_child(label);
+            button.add_child(s.row);
+        } else {
+            button.insert_child_at_index(s.logo, 0);    // unexpected layout: logo only, stays harmless
+        }
+    }
+
+    _dock(box) {
+        const s = this._start;
+        const container = s.button.container;
+        container.get_parent()?.remove_child(container);
+        // panel buttons are x_expand (to fill top-bar slots); in the taskbar BoxLayout that would
+        // let START swallow all spare width. An explicit false on the container stops propagation.
+        container.x_expand = false;
+        box.insert_child_at_index(container, 0);
+        s.box = box;
+        // runs before Clutter destroys box's children: get START out of window-list's tree first
+        s.boxDestroyId = box.connect('destroy', () => {
+            s.box = null;
+            s.boxDestroyId = 0;
+            if (this._tearingDown || this._start !== s) return;
+            this._returnHome(container, box);
+            this._schedule();                     // window-list usually comes straight back
+        });
+    }
+
+    _returnHome(container, from) {
+        if (container.get_parent() !== from) return;
+        from.remove_child(container);
+        const home = Main.panel._leftBox;
+        home.insert_child_at_index(container, Math.min(this._start?.origIndex ?? 0, home.get_n_children()));
+    }
+
+    _undock() {
+        const s = this._start;
+        if (!s?.box) return;
+        const box = s.box;
+        if (s.boxDestroyId) box.disconnect(s.boxDestroyId);
+        s.box = null;
+        s.boxDestroyId = 0;
+        this._returnHome(s.button.container, box);
+    }
+
+    _restoreStart() {
+        const s = this._start;
+        if (!s) return;
+        try {
+            this._undock();
+            const {button, label} = s;
+            if (s.buttonDestroyId) button.disconnect(s.buttonDestroyId);
+            button.remove_style_class_name('p95-start');
+            if (s.row && label && label.get_parent() === s.row) {
+                s.row.remove_child(label);
+                button.remove_child(s.row);
+                button.add_child(label);
+            }
+            if (label && s.origText !== null) label.text = s.origText;
+            s.logo.destroy();
+            s.row?.destroy();
+        } catch (e) {
+            console.error(`[phosphor95] restore failed: ${e}`);
+        }
+        this._start = null;
+    }
+
+    _addHud() {
+        this._hud = new St.Label({
+            text: HUD_LABEL,
+            style_class: 'p95-hud-id',
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        Main.panel._leftBox.insert_child_at_index(this._hud, 0);
+    }
+}

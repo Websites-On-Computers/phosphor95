@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# ▓ PHOSPHOR-95 control ─ build, install, preview and manage the theme.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+G=$'\e[38;2;51;255;102m'; D=$'\e[38;2;31;160;70m'; A=$'\e[38;2;255;176;0m'; R=$'\e[0m'
+
+usage() { cat <<USAGE
+${G}PHOSPHOR-95${R} ${D}// theme control${R}
+
+  ./phosphor fetch               download pinned upstream sources (Win95 GTK, Chicago95)
+  ./phosphor build [part ...]    generate build/  (parts: terminal gtk shell icons cursors wallpaper boot gdm)
+  ./phosphor install [part ...]  install for this user (no sudo)  (parts: fonts themes icons wallpaper terminal shell settings)
+  ./phosphor apply               fetch + build + install, the usual loop after editing config/ or src/
+  ./phosphor rename NAME         change the system name everywhere (banner, START tag, boot, wallpaper)
+  ./phosphor preview [gtk|boot]  render offscreen previews to build/preview/
+  ./phosphor doctor              check that everything is installed and healthy
+  ./phosphor uninstall           revert the user-level install
+
+  System parts (sudo, run in a terminal):
+  sudo ./scripts/install-system.sh packages|boot|gdm|shell|all|uninstall
+USAGE
+}
+
+preview() {
+  mkdir -p build/preview
+  local what="${1:-all}" sandbox; sandbox="$(mktemp -d)"
+  trap 'rm -rf "$sandbox"' RETURN
+  if [[ "$what" == gtk || "$what" == all ]]; then
+    mkdir -p "$sandbox/themes"; ln -s "$ROOT/build/gtk/Phosphor95" "$sandbox/themes/Phosphor95"
+    ln -s "${XDG_DATA_HOME:-$HOME/.local/share}/fonts" "$sandbox/fonts"   # keep user fonts visible
+    XDG_DATA_HOME="$sandbox" python3 tools/preview_gtk3.py build/preview/gtk3.png
+    XDG_DATA_HOME="$sandbox" python3 tools/preview_gtk3.py build/preview/gtk3-backdrop.png --backdrop
+    echo "${G}[ OK ]${R} build/preview/gtk3.png, gtk3-backdrop.png"
+  fi
+  if [[ "$what" == boot || "$what" == all ]]; then
+    python3 tools/preview_boot.py build/preview >/dev/null
+    echo "${G}[ OK ]${R} build/preview/plymouth-post.png, plymouth-logo.png, grub.png"
+  fi
+}
+
+check() { if eval "$2" >/dev/null 2>&1; then echo "  ${G}[ OK ]${R} $1"; else echo "  ${A}[ -- ]${R} $1${3:+  ${D}($3)${R}}"; fi; }
+doctor() {
+  echo "${G}PHOSPHOR-95 DIAGNOSTICS${R}"
+  local DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+  check "fonts installed"            "[[ -n \$(fc-list W95FA) ]]"                       "./phosphor install fonts"
+  check "pixel fonts crisp (no AA)"  "[[ \$(fc-match -v W95FA) == *'antialias: False'* ]]"
+  check "GTK theme active"           "[[ \$(gsettings get org.gnome.desktop.interface gtk-theme) == \"'Phosphor95'\" ]]"
+  check "icon theme active"          "[[ \$(gsettings get org.gnome.desktop.interface icon-theme) == \"'Phosphor95'\" ]]"
+  check "cursor theme active"        "[[ \$(gsettings get org.gnome.desktop.interface cursor-theme) == \"'Phosphor95-Cursors'\" ]]"
+  check "shell theme selected"       "[[ \$(gsettings get org.gnome.shell.extensions.user-theme name) == \"'Phosphor95'\" ]]" "apt: gnome-shell-extension-user-theme"
+  for e in user-theme window-list apps-menu system-monitor; do
+    check "extension $e"             "gnome-extensions info $e@gnome-shell-extensions.gcampax.github.com | grep -q 'State: ACTIVE'" "installed? logged out/in?"
+  done
+  check "extension phosphor95-shell" "gnome-extensions info phosphor95-shell@terminal01 | grep -q 'State: ACTIVE'" "log out/in once"
+  check "ubuntu dock disabled"       "! gnome-extensions info ubuntu-dock@ubuntu.com | grep -q 'State: ACTIVE'"
+  check "ghostty installed"          "command -v ghostty"                            "sudo ./scripts/install-system.sh packages"
+  check "ghostty config valid"       "ghostty +validate-config"
+  check "CRT shader"                 "[[ \$(crt status) == on ]]"                    "crt on"
+  check "zsh is login shell"         "getent passwd \$USER | grep -q zsh"            "sudo ./scripts/install-system.sh shell"
+  check "starship config parses"   "command -v starship >/dev/null && [[ -z \$(starship print-config 2>&1 >/dev/null | grep -i error) ]]"
+  check "plymouth theme"             "readlink -f /etc/alternatives/default.plymouth | grep -q phosphor95" "sudo ./scripts/install-system.sh boot"
+  check "grub theme"                 "grep -q phosphor95 /etc/default/grub"           "sudo ./scripts/install-system.sh boot"
+  check "gdm theme"                  "readlink -f /etc/alternatives/gdm-theme.gresource | grep -q Phosphor95" "sudo ./scripts/install-system.sh gdm"
+  echo "${D}  shell theme errors this boot:${R}"
+  journalctl --user -b -o cat 2>/dev/null | grep -iE "St-WARNING|JS ERROR|(phosphor|user-theme|stylesheet).*(error|fail|warn)" | tail -n 8 | sed 's/^/    /' || true
+}
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  fetch)   tools/fetch.sh ;;
+  build)   python3 tools/build.py "$@" ;;
+  install) scripts/install-user.sh "$@" ;;
+  apply)   tools/fetch.sh && python3 tools/build.py && scripts/install-user.sh ;;
+  rename)
+    [[ -n "${1:-}" ]] || { echo "usage: ./phosphor rename NAME"; exit 1; }
+    python3 -I - "$1" "$ROOT/config/system.toml" <<'PY'
+import re, sys
+name, path = sys.argv[1], sys.argv[2]
+s = open(path).read()
+s = re.sub(r'^(name\s*=\s*)"[^"]*"', lambda m: m.group(1) + '"' + name.replace('"', '') + '"', s, count=1, flags=re.M)
+open(path, "w").write(s)
+PY
+    echo "${G}renamed to $1${R}: rebuilding"; python3 tools/build.py && scripts/install-user.sh
+    echo "${D}boot screens embed the name: re-run  sudo ./scripts/install-system.sh boot gdm  to update them${R}" ;;
+  preview) preview "${1:-all}" ;;
+  doctor)  doctor ;;
+  uninstall) scripts/uninstall.sh ;;
+  help|-h|--help) usage ;;
+  *) usage; exit 1 ;;
+esac

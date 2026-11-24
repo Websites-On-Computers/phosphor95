@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Phosphor-95 boot sequence: POST-style readout of *real* system facts, then fastfetch.
+# Any key skips the animation.  --short = fastfetch only.
+G=$'\e[{{ text.fg | sgr }}m'
+D=$'\e[{{ text.fg_dim | sgr }}m'
+H=$'\e[{{ text.glow | sgr }}m'
+A=$'\e[{{ status.warn | sgr }}m'
+R=$'\e[0m'
+NAME="{{ identity.name }}"; BIOS="{{ identity.bios }}"
+
+[[ "$1" == "--short" ]] && { command -v fastfetch >/dev/null && fastfetch; exit 0; }
+
+SKIP=0
+pause() { ((SKIP)) && return; read -rsn1 -t "$1" && SKIP=1; }
+type_out() { # text, per-char delay
+  local s="$1" i
+  if ((SKIP)); then printf '%s' "$s"; return; fi
+  for ((i=0; i<${#s}; i++)); do printf '%s' "${s:i:1}"; read -rsn1 -t "${2:-0.004}" && { SKIP=1; printf '%s' "${s:i+1}"; return; }; done
+}
+ok() { printf ' %s[ %sOK%s ]%s\n' "$D" "$H" "$D" "$R"; }
+
+cpu=$(awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo | sed 's/(R)//g;s/(TM)//g;s/  */ /g')
+mem_kb=$(awk '/MemTotal/{print $2}' /proc/meminfo)
+disk=$(lsblk -dno MODEL,SIZE "$(findmnt -no SOURCE / | sed -E 's/p?[0-9]+$//')" 2>/dev/null | sed 's/  */ /g')
+ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4; exit}')
+models="NOT DETECTED"
+if command -v ollama >/dev/null; then
+  n=$(ollama list 2>/dev/null | tail -n +2 | wc -l); models="OLLAMA  ${n} MODEL(S)"
+elif pgrep -x llama-server >/dev/null; then models="LLAMA.CPP SERVER ONLINE"; fi
+
+printf '\e[?25l'   # hide cursor
+trap 'printf "\e[?25h"' EXIT
+clear
+printf '%s%s%s   %s(C) 1995-%s%s\n' "$H" "$BIOS" "$R" "$D" "$(date +%Y)" "$R"
+printf '%s%s%s\n\n' "$G" "$NAME" "$R"
+type_out "${G}CPU          : ${H}${cpu}${R}"; echo
+printf '%sMEMORY TEST  : %s' "$G" "$H"
+total=$((mem_kb)); step=$((total/24))
+for ((m=0; m<=total; m+=step)); do ((SKIP)) && break; printf '\r%sMEMORY TEST  : %s%dK' "$G" "$H" "$m"; read -rsn1 -t 0.012 && SKIP=1; done
+printf '\r%sMEMORY TEST  : %s%dK%s' "$G" "$H" "$total" "$R"; ok
+type_out "${G}FIXED DISK   : ${H}${disk:-UNKNOWN}${R}"; ok
+type_out "${G}NETWORK      : ${H}${ip:-OFFLINE}${R}"; [[ -n "$ip" ]] && ok || printf ' %s[ -- ]%s\n' "$A" "$R"
+type_out "${G}MODEL HOST   : ${H}${models}${R}"; echo
+pause 0.25
+printf '\n%sSTARTING %s...%s\n' "$D" "$NAME" "$R"
+pause 0.35
+clear
+printf '\e[?25h'
+command -v fastfetch >/dev/null && fastfetch

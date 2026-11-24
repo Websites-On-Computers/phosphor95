@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# crt on|off|toggle|status: switch the Ghostty phosphor CRT shader, live-reload open terminals.
+CFG="$HOME/.config/ghostty/config"
+[[ -f "$CFG" ]] || { echo "no ghostty config at $CFG"; exit 1; }
+state() { sed -n '/^# >>> crt >>>/,/^# <<< crt <<</p' "$CFG" | grep -q '^custom-shader =' && echo on || echo off; }
+set_on()  { sed -i '/^# >>> crt >>>/,/^# <<< crt <<</ s/^#\s*\(custom-shader\)/\1/' "$CFG"; }
+set_off() { sed -i '/^# >>> crt >>>/,/^# <<< crt <<</ s/^\(custom-shader\)/# \1/' "$CFG"; }
+case "${1:-toggle}" in
+  on) set_on ;; off) set_off ;;
+  toggle) [[ $(state) == on ]] && set_off || set_on ;;
+  status) state; exit 0 ;;
+  *) echo "usage: crt [on|off|toggle|status]"; exit 1 ;;
+esac
+pkill -USR2 -x ghostty 2>/dev/null   # ghostty reloads its config on SIGUSR2
+echo "CRT $(state)"

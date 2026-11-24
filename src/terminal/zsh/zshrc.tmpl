@@ -1,0 +1,81 @@
+# ── Phosphor-95 // zsh ──────────────────────────────────── generated, edit src/
+# Personal additions go in ~/.zshrc.local (never overwritten).
+
+export P95_NAME="{{ identity.name }}"
+typeset -U path
+path=("$HOME/.local/bin" $path)
+
+# history
+HISTFILE="$HOME/.zsh_history"; HISTSIZE=50000; SAVEHIST=50000
+setopt APPEND_HISTORY SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
+setopt AUTO_CD INTERACTIVE_COMMENTS NO_BEEP EXTENDED_GLOB
+
+# completion
+autoload -Uz compinit && compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump"
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+P95_DIM='{{ text.fg_dim }}'
+zstyle ':completion:*:descriptions' format "%F{$P95_DIM}-- %d --%f"
+
+bindkey -e
+bindkey '^[[A' history-beginning-search-backward
+bindkey '^[[B' history-beginning-search-forward
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
+# phosphor ls colours: dirs bright, exec glow, links cyan-green, archives amber
+export LS_COLORS="di=1;32:ln=36:so=35:pi=33:ex=1;95:bd=33:cd=33:su=30;42:sg=30;42:tw=30;42:ow=30;42:*.tar=33:*.gz=33:*.zip=33:*.xz=33:*.zst=33:*.deb=33:*.md=97:*.py=92:*.sh=92:*.js=92:*.ts=92:*.json=37:*.toml=37"
+export GREP_COLORS='mt=30;42'
+alias ls='ls --color=auto --group-directories-first'
+alias ll='ls -lh'
+alias la='ls -lAh'
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+alias ip='ip -color=auto'
+export LESS='-R'
+export LESS_TERMCAP_md=$'\e[1;92m' LESS_TERMCAP_me=$'\e[0m' \
+       LESS_TERMCAP_us=$'\e[4;32m' LESS_TERMCAP_ue=$'\e[0m' \
+       LESS_TERMCAP_so=$'\e[30;42m' LESS_TERMCAP_se=$'\e[0m'
+
+# plugins (Ubuntu packages)
+if [[ -r /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+  source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg={{ text.fg_faint }}'
+fi
+
+# prompt
+command -v starship >/dev/null && eval "$(starship init zsh)"
+
+# first terminal of the login session plays the boot sequence; later ones are quiet.
+# P95_BANNER=always|once|never (default once)
+if [[ -o interactive && -z "$P95_NO_BANNER" && "$TERM_PROGRAM" != "vscode" ]]; then
+  case "${P95_BANNER:-once}" in
+    always) p95-boot --short ;;
+    once)   _flag="${XDG_RUNTIME_DIR:-/tmp}/p95-booted"
+            if [[ ! -e "$_flag" ]]; then : > "$_flag"; p95-boot; fi; unset _flag ;;
+  esac
+fi
+
+[[ -r "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# syntax highlighting must be sourced last
+if [[ -r /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  typeset -A ZSH_HIGHLIGHT_STYLES
+  ZSH_HIGHLIGHT_STYLES[default]='fg={{ text.fg }}'
+  ZSH_HIGHLIGHT_STYLES[command]='fg={{ text.glow }},bold'
+  ZSH_HIGHLIGHT_STYLES[builtin]='fg={{ text.glow }}'
+  ZSH_HIGHLIGHT_STYLES[alias]='fg={{ text.glow }}'
+  ZSH_HIGHLIGHT_STYLES[function]='fg={{ text.glow }}'
+  ZSH_HIGHLIGHT_STYLES[precommand]='fg={{ text.glow }},underline'
+  ZSH_HIGHLIGHT_STYLES[unknown-token]='fg={{ status.error }}'
+  ZSH_HIGHLIGHT_STYLES[reserved-word]='fg={{ status.warn }}'
+  ZSH_HIGHLIGHT_STYLES[path]='fg={{ text.fg }},underline'
+  ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg={{ ansi.cyan }}'
+  ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg={{ ansi.cyan }}'
+  ZSH_HIGHLIGHT_STYLES[single-hyphen-option]='fg={{ text.fg_dim }}'
+  ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg={{ text.fg_dim }}'
+  ZSH_HIGHLIGHT_STYLES[comment]='fg={{ text.fg_faint }}'
+  ZSH_HIGHLIGHT_STYLES[globbing]='fg={{ status.warn }}'
+fi

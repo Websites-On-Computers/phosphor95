@@ -1,0 +1,78 @@
+# ── Phosphor-95 // starship ─────────────────────────────── generated, edit src/
+# ASCII/CP437 only: renders in the IBM VGA pixel font, no Nerd Font needed.
+"$schema" = 'https://starship.rs/config-schema.json'
+palette = "phosphor"
+add_newline = true
+command_timeout = 800
+
+format = '''
+[┌─\[](dim)$username[@](dim)$hostname[\]─\[](dim)$directory[\]](dim)$git_branch$git_status$python$nodejs$rust$cmd_duration$jobs
+[└─](dim)$status$character'''
+right_format = "$time"
+
+[palettes.phosphor]
+fg     = "{{ text.fg }}"
+dim    = "{{ text.fg_dim }}"
+faint  = "{{ text.fg_faint }}"
+glow   = "{{ text.glow }}"
+warn   = "{{ status.warn }}"
+err    = "{{ status.error }}"
+
+[username]
+show_always = true
+format = "[$user](glow)"
+style_user = "glow"
+style_root = "err"
+
+[hostname]
+ssh_only = false
+format = "[{{ identity.name }}](fg)"
+
+[directory]
+format = "[$path](bold fg)[$read_only](warn)"
+truncation_length = 4
+truncation_symbol = "…/"
+read_only = " [RO]"
+home_symbol = "~"
+
+[git_branch]
+format = '[─\[](dim)[git:](dim)[$branch](glow)'
+[git_status]
+format = '[$all_status$ahead_behind](warn)[\]](dim)'
+conflicted = "!"
+ahead = "↑${count}"
+behind = "↓${count}"
+diverged = "↕"
+modified = "*"
+staged = "+"
+untracked = "?"
+deleted = "x"
+stashed = "s"
+
+[python]
+format = '[─\[](dim)[py:$version](fg)[\]](dim)'
+[nodejs]
+format = '[─\[](dim)[node:$version](fg)[\]](dim)'
+[rust]
+format = '[─\[](dim)[rs:$version](fg)[\]](dim)'
+
+[cmd_duration]
+min_time = 2000
+format = '[─\[](dim)[t+$duration](warn)[\]](dim)'
+
+[jobs]
+format = '[─\[](dim)[bg:$number](warn)[\]](dim)'
+
+[status]
+disabled = false
+format = "[ERR $status ](err)"
+
+[character]
+success_symbol = "[>](bold glow)"
+error_symbol = "[>](bold err)"
+vimcmd_symbol = "[<](bold glow)"
+
+[time]
+disabled = false
+format = "[$time](faint)"
+time_format = "%H:%M:%S"

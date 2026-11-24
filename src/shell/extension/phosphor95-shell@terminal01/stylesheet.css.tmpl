@@ -1,0 +1,67 @@
+/* Phosphor-95 // phosphor95-shell extension stylesheet ─────── generated, edit src/
+ * Rules that must beat another extension's own stylesheet (window-list) live here:
+ * St ranks extension stylesheets above the shell theme, so the theme can't win them.
+ * Selectors carry a .bottom-panel prefix to out-specify window-list's rules.
+ */
+/* ── bottom taskbar (window-list extension) ── */
+/* the taskbar actor is also named #panel, so beat the top-bar rules on specificity */
+#panel.bottom-panel, #panel.bottom-panel.solid, .bottom-panel {
+  background-color: {{ core.face }} !important;
+  border-bottom-width: 0 !important;
+  border-top: 1px solid {{ core.bevel_hi }} !important;
+  box-shadow: inset 0 1px 0 {{ core.bevel_light }};
+  height: 34px !important;
+  padding: 2px 2px 0 2px;
+}
+.bottom-panel .window-list { spacing: 3px !important; font-size: {{ fonts.ui_size }}pt !important; }
+.bottom-panel .window-button, .window-button-drag-actor { padding: 2px 0 !important; }
+.bottom-panel .window-button > StWidget {
+  color: {{ text.fg }} !important;
+  background-color: {{ core.face }} !important;
+  border-radius: 0 !important;
+  border: 1px solid;
+  border-color: {{ core.bevel_hi }} {{ core.void }} {{ core.void }} {{ core.bevel_hi }};
+  box-shadow: inset -1px -1px 0 {{ core.shadow }};
+  padding: 2px 8px !important;
+  -st-natural-width: 13em !important;
+  max-width: 13em !important;
+  transition-duration: 0ms !important;
+}
+.bottom-panel .window-button:hover > StWidget { background-color: {{ core.face_hover }} !important; color: {{ text.glow }} !important; }
+.bottom-panel .window-button.focused > StWidget,
+.bottom-panel .window-button.focused:hover > StWidget,
+.bottom-panel .window-button.focused:active > StWidget,
+.bottom-panel .window-button:active > StWidget {
+  background-color: {{ core.base }} !important;
+  color: {{ text.glow }} !important;
+  border-color: {{ core.void }} {{ core.bevel_hi }} {{ core.bevel_hi }} {{ core.void }};
+  box-shadow: inset 1px 1px 0 {{ core.shadow }};
+  font-weight: bold;
+  text-shadow: 0 0 4px {{ text.fg | alpha 0.5 }};
+}
+.bottom-panel .window-button.minimized > StWidget {
+  color: {{ text.fg_faint }} !important;
+  background-color: {{ core.shadow }} !important;
+}
+.bottom-panel .window-button-icon { width: 20px !important; height: 20px !important; }
+.bottom-panel .window-button-attention-indicator { background-color: {{ status.warn }} !important; }
+.window-button-drag-actor { background-color: {{ core.face_hover }} !important; border-radius: 0 !important; border-color: {{ text.fg }} !important; }
+.bottom-panel .window-list .placeholder { border-radius: 0 !important; border: 1px dashed {{ text.fg_dim }} !important; }
+.bottom-panel .window-list-workspace-indicator .workspace,
+.bottom-panel .window-list-workspace-indicator .status-label-bin {
+  border-radius: 0 !important;
+  background-color: {{ core.base }} !important;
+  border: 1px solid {{ core.shadow }} !important;
+  color: {{ text.fg }} !important;
+}
+.bottom-panel .window-list-workspace-indicator .workspace.active { border-color: {{ text.fg }} !important; background-color: {{ core.face_hover }} !important; }
+
+/* workspace previews: windows as phosphor blocks, not grey slabs */
+.bottom-panel .window-list-workspace-indicator .workspace { background-color: {{ core.base }} !important; border-radius: 0 !important; }
+.window-list-workspace-indicator-window-preview {
+  background-color: {{ core.bevel_light }};
+  border: 1px solid {{ core.void }};
+  border-radius: 0;
+}
+.window-list-workspace-indicator-window-preview.active { background-color: {{ text.fg }}; }
+.bottom-panel .window-list-workspace-indicator.name-label { box-shadow: none !important; }

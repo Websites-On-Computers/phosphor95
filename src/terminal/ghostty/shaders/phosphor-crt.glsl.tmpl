@@ -1,0 +1,69 @@
+// Phosphor-95 CRT shader for Ghostty (Shadertoy-style entry point).
+// Cheap by design for low-end integrated GPUs: 1 + 8 texture taps, no time loop.
+//   - subtle barrel curvature    - 2px scanlines (phosphor rows)
+//   - soft bloom on bright text  - vignette + rounded tube corners
+// Tune the constants below; set CURVE to 0.0 for perfectly flat glass.
+
+const float CURVE      = 0.030;  // barrel distortion strength
+const float SCAN       = 0.22;   // scanline darkness 0..1
+const float BLOOM      = 0.55;   // glow strength
+const float BLOOM_R    = 1.6;    // glow radius in pixels
+const float VIGNETTE   = 0.28;   // edge darkening
+const float CORNER     = 0.030;  // rounded tube corner radius (uv units)
+const vec3  GLOW_TINT  = vec3({{ text.glow | rgbf }});
+const vec3  BG         = vec3({{ core.base | rgbf }});
+
+vec2 curve(vec2 uv) {
+    uv = uv * 2.0 - 1.0;
+    vec2 off = abs(uv.yx) * CURVE;
+    uv += uv * off * off * 4.0;
+    return uv * 0.5 + 0.5;
+}
+
+float roundedBox(vec2 uv) {
+    vec2 q = abs(uv - 0.5) - (0.5 - CORNER);
+    float d = length(max(q, 0.0)) - CORNER;
+    return 1.0 - smoothstep(0.0, 0.004, d);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 uv  = fragCoord / iResolution.xy;
+    vec2 cuv = curve(uv);
+
+    if (cuv.x < 0.0 || cuv.x > 1.0 || cuv.y < 0.0 || cuv.y > 1.0) {
+        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
+    vec3 col = texture(iChannel0, cuv).rgb;
+
+    // bloom: 8 taps in a ring, only bright phosphor contributes
+    vec2 px = BLOOM_R / iResolution.xy;
+    vec3 glow = vec3(0.0);
+    glow += texture(iChannel0, cuv + vec2( px.x, 0.0)).rgb;
+    glow += texture(iChannel0, cuv + vec2(-px.x, 0.0)).rgb;
+    glow += texture(iChannel0, cuv + vec2(0.0,  px.y)).rgb;
+    glow += texture(iChannel0, cuv + vec2(0.0, -px.y)).rgb;
+    glow += texture(iChannel0, cuv + px * 1.6).rgb;
+    glow += texture(iChannel0, cuv - px * 1.6).rgb;
+    glow += texture(iChannel0, cuv + vec2(px.x, -px.y) * 1.6).rgb;
+    glow += texture(iChannel0, cuv + vec2(-px.x, px.y) * 1.6).rgb;
+    glow /= 8.0;
+    float g = max(max(glow.r, glow.g), glow.b);
+    col += glow * smoothstep(0.25, 1.0, g) * BLOOM * mix(vec3(1.0), GLOW_TINT, 0.35);
+
+    // scanlines: darken every other device row
+    float line = mod(floor(fragCoord.y), 2.0);
+    col *= 1.0 - SCAN * line;
+
+    // faint phosphor floor so "black" reads as glass, not void
+    col = max(col, BG * 0.9);
+
+    // vignette + tube shape
+    vec2 v = cuv * (1.0 - cuv.yx);
+    float vig = pow(clamp(v.x * v.y * 16.0, 0.0, 1.0), VIGNETTE);
+    col *= vig;
+    col *= roundedBox(cuv);
+
+    fragColor = vec4(col, 1.0);
+}

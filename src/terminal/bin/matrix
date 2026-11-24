@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Phosphor-95 screensaver: digital rain. Any key exits.
+command -v cmatrix >/dev/null || { echo "cmatrix not installed"; exit 1; }
+exec cmatrix -b -u 5 -C green "$@"

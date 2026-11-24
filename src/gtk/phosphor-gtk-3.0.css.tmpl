@@ -1,0 +1,31 @@
+/* Phosphor-95 layer on top of the recoloured Win95 CSS (GTK3). */
+* { caret-color: {{ text.glow }}; -gtk-secondary-caret-color: {{ text.fg_dim }}; }
+
+/* phosphor bloom on text: faint, so the pixel font stays crisp */
+label, entry, spinbutton, textview text, treeview.view, menuitem label, .view {
+  text-shadow: 0 0 3px {{ text.fg | alpha 0.28 }};
+}
+/* inverted surfaces (selection, active title bar) must not glow */
+*:selected, *:selected label, label:selected, headerbar:not(:backdrop) .title,
+headerbar:not(:backdrop) .subtitle, .titlebar:not(:backdrop) .title,
+button:checked label, menuitem:hover label, menuitem:hover {
+  text-shadow: none;
+}
+selection, *:selected, *:selected:focus, .view:selected, treeview.view:selected,
+textview text selection, entry selection, label selection {
+  background-color: {{ select.bg }};
+  color: {{ select.fg }};
+}
+menuitem:hover, menu menuitem:hover, .menu menuitem:hover {
+  background-color: {{ select.bg }};
+  color: {{ select.fg }};
+}
+tooltip, tooltip.background, .tooltip {
+  background-color: {{ core.base }};
+  color: {{ text.fg }};
+  border: 1px solid {{ text.fg_dim }};
+  box-shadow: none;
+}
+tooltip label { color: {{ text.fg }}; text-shadow: 0 0 3px {{ text.fg | alpha 0.35 }}; }
+link, *:link { color: {{ text.glow }}; }
+progressbar progress { background-color: {{ text.fg }}; background-image: none; }

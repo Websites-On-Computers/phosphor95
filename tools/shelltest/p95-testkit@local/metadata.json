@@ -1,0 +1,1 @@
+{ "uuid": "p95-testkit@local", "name": "Phosphor-95 test kit", "description": "Test-only: loads the theme and screenshots scripted scenes in a headless nested shell. Never install in a real session.", "shell-version": ["49", "50", "51"], "version": 1 }

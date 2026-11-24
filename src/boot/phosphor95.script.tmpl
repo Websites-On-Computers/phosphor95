@@ -1,0 +1,233 @@
+# Phosphor-95 // Plymouth script — generated from src/boot, edit there.
+# Timeline (50 fps): POST lines type in -> memory counter -> fade to logo + Win95 bar.
+
+Window.SetBackgroundTopColor(@BG_R@, @BG_G@, @BG_B@);
+Window.SetBackgroundBottomColor(@BG_R@, @BG_G@, @BG_B@);
+
+SW = Window.GetWidth();
+SH = Window.GetHeight();
+MX = 56;
+MY = 48;
+LH = 22;
+POST_COUNT = @POST_COUNT@;
+MEM_LINE = @MEM_LINE@;
+MEM_KB = @MEM_KB@;
+SEG_N = @SEG_N@;
+SEG_W = @SEG_W@;
+STEP = 6;
+MEM_FRAMES = 32;
+
+mode = Plymouth.GetMode();
+booting = 1;
+if (mode == "shutdown" || mode == "reboot") booting = 0;
+
+# ── scanline overlay (full screen, very faint) ─────────────────────────────
+scan = Sprite(Image("scanlines.png"));
+scan.SetPosition(0, 0, 100);
+
+# ── POST lines ──────────────────────────────────────────────────────────────
+i = 0;
+while (i < POST_COUNT) {
+  if (i != MEM_LINE) {
+    post[i] = Sprite(Image("post-" + i + ".png"));
+    post[i].SetPosition(MX, MY + i * LH, 10);
+    post[i].SetOpacity(0);
+  }
+  i = i + 1;
+}
+
+mem_label_img = Image("mem-label.png");
+mem_label = Sprite(mem_label_img);
+mem_label.SetPosition(MX, MY + MEM_LINE * LH, 10);
+mem_label.SetOpacity(0);
+d = 0;
+while (d < 10) {
+  digit_img[d] = Image("digit-" + d + ".png");
+  d = d + 1;
+}
+DIGIT_ADV = 9;
+mem_x = MX + mem_label_img.GetWidth() - 8;
+k = 0;
+while (k < 9) {
+  mem_digit[k] = Sprite(digit_img[0]);
+  mem_digit[k].SetPosition(mem_x + k * DIGIT_ADV, MY + MEM_LINE * LH, 10);
+  mem_digit[k].SetOpacity(0);
+  k = k + 1;
+}
+# number of digits in the final value fixes where the suffix sits
+mem_len = 1;
+p = 10;
+while (p <= MEM_KB) { mem_len = mem_len + 1; p = p * 10; }
+mem_suffix = Sprite(Image("mem-suffix.png"));
+mem_suffix.SetPosition(mem_x + mem_len * DIGIT_ADV, MY + MEM_LINE * LH, 10);
+mem_suffix.SetOpacity(0);
+
+fun show_number(v) {
+  p = 1;
+  n = 1;
+  while (p * 10 <= v) { p = p * 10; n = n + 1; }
+  k = 0;
+  while (k < 9) {
+    if (k < n) {
+      dd = Math.Int(v / p);
+      if (dd > 9) dd = 9;
+      if (dd < 0) dd = 0;
+      v = v - dd * p;
+      p = p / 10;
+      global.mem_digit[k].SetImage(global.digit_img[dd]);
+      global.mem_digit[k].SetOpacity(1);
+    } else {
+      global.mem_digit[k].SetOpacity(0);
+    }
+    k = k + 1;
+  }
+}
+
+fun reveal_frame(i) {
+  f = 4 + i * global.STEP;
+  if (i > global.MEM_LINE) f = f + global.MEM_FRAMES;
+  return f;
+}
+
+fun set_post_opacity(a) {
+  i = 0;
+  while (i < global.POST_COUNT) {
+    if (i != global.MEM_LINE) global.post[i].SetOpacity(a);
+    i = i + 1;
+  }
+  global.mem_label.SetOpacity(a);
+  global.mem_suffix.SetOpacity(a);
+  k = 0;
+  while (k < 9) {
+    if (k < global.mem_len) global.mem_digit[k].SetOpacity(a);
+    k = k + 1;
+  }
+}
+
+# ── logo + Win95 segmented progress bar ─────────────────────────────────────
+logo_img = Image("logo.png");
+logo = Sprite(logo_img);
+logo_y = SH * 0.36 - logo_img.GetHeight() / 2;
+logo.SetPosition((SW - logo_img.GetWidth()) / 2, logo_y, 20);
+logo.SetOpacity(0);
+
+frame_img = Image("bar-frame.png");
+bar_x = (SW - frame_img.GetWidth()) / 2;
+bar_y = logo_y + logo_img.GetHeight() + 36;
+bar_frame = Sprite(frame_img);
+bar_frame.SetPosition(bar_x, bar_y, 20);
+bar_frame.SetOpacity(0);
+block_img = Image("bar-block.png");
+s = 0;
+while (s < SEG_N) {
+  seg[s] = Sprite(block_img);
+  seg[s].SetPosition(bar_x + 5 + s * SEG_W, bar_y + 4, 21);
+  seg[s].SetOpacity(0);
+  s = s + 1;
+}
+
+shut_img = Image("shutdown-title.png");
+shut = Sprite(shut_img);
+shut.SetPosition((SW - shut_img.GetWidth()) / 2, bar_y, 20);
+shut.SetOpacity(0);
+
+progress = 0;
+fun boot_progress_cb(duration, value) {
+  global.progress = value;
+}
+Plymouth.SetBootProgressFunction(boot_progress_cb);
+
+fun update_bar(alpha, t) {
+  v = global.progress;
+  if (t > v) v = t;
+  if (v > 1) v = 1;
+  lit = Math.Int(global.SEG_N * v);
+  s = 0;
+  while (s < global.SEG_N) {
+    if (s < lit) global.seg[s].SetOpacity(alpha);
+    else global.seg[s].SetOpacity(0);
+    s = s + 1;
+  }
+}
+
+# ── frame loop ──────────────────────────────────────────────────────────────
+frame = 0;
+post_hidden = 0;
+post_end = reveal_frame(POST_COUNT) + 18;
+
+fun refresh_cb() {
+  global.frame = global.frame + 1;
+  f = global.frame;
+  if (global.booting) {
+    i = 0;
+    while (i < global.POST_COUNT) {
+      if (i != global.MEM_LINE && f == reveal_frame(i)) global.post[i].SetOpacity(1);
+      i = i + 1;
+    }
+    ms = reveal_frame(global.MEM_LINE);
+    if (f >= ms && f <= ms + global.MEM_FRAMES + 1) {
+      global.mem_label.SetOpacity(1);
+      t = (f - ms) / global.MEM_FRAMES;
+      if (t > 1) t = 1;
+      show_number(Math.Int(global.MEM_KB * t));
+      if (t >= 1) global.mem_suffix.SetOpacity(1);
+    }
+    if (f > global.post_end) {
+      a = (f - global.post_end) / 15;
+      if (a > 1) a = 1;
+      if (a < 1) set_post_opacity(1 - a);
+      if (a >= 1 && global.post_hidden != 1) { set_post_opacity(0); global.post_hidden = 1; }
+      global.logo.SetOpacity(a);
+      global.bar_frame.SetOpacity(a);
+      fake = (f - global.post_end) / 300;
+      if (fake > 0.92) fake = 0.92;
+      update_bar(a, fake);
+    }
+  } else {
+    global.logo.SetOpacity(1);
+    global.shut.SetOpacity(1);
+  }
+}
+Plymouth.SetRefreshFunction(refresh_cb);
+
+# ── disk passphrase dialog ──────────────────────────────────────────────────
+dialog_img = Image("dialog.png");
+dialog = Sprite(dialog_img);
+dialog_x = (SW - dialog_img.GetWidth()) / 2;
+dialog_y = SH * 0.62;
+dialog.SetPosition(dialog_x, dialog_y, 50);
+dialog.SetOpacity(0);
+bullet_img = Image("bullet.png");
+b = 0;
+while (b < 32) {
+  bullet[b] = Sprite(bullet_img);
+  bullet[b].SetPosition(dialog_x + 30 + b * 12, dialog_y + 86, 51);
+  bullet[b].SetOpacity(0);
+  b = b + 1;
+}
+
+fun display_password_cb(prompt, bullets) {
+  global.dialog.SetOpacity(1);
+  b = 0;
+  while (b < 32) {
+    if (b < bullets) global.bullet[b].SetOpacity(1);
+    else global.bullet[b].SetOpacity(0);
+    b = b + 1;
+  }
+}
+Plymouth.SetDisplayPasswordFunction(display_password_cb);
+
+fun display_normal_cb() {
+  global.dialog.SetOpacity(0);
+  b = 0;
+  while (b < 32) { global.bullet[b].SetOpacity(0); b = b + 1; }
+}
+Plymouth.SetDisplayNormalFunction(display_normal_cb);
+
+# ── status messages (fsck etc.) use the initramfs font ─────────────────────
+msg = Sprite();
+msg.SetPosition(MX, SH - 60, 60);
+fun message_cb(text) {
+  global.msg.SetImage(Image.Text(text, {{ text.fg | rgbf }}));
+}
+Plymouth.SetMessageFunction(message_cb);
